@@ -71,15 +71,14 @@ class Standard
 			{
 				$basketCtrl->deleteService( 'payment' );
 
-				foreach( (array) $serviceIds as $idx => $id )
+				foreach( array_unique( (array) $serviceIds ) as $id )
 				{
 					try
 					{
-						$basketCtrl->addService( $servCtrl->get( $id ), $view->param( 'c_payment/' . $id, [] ), $idx );
+						$basketCtrl->addService( $servCtrl->get( $id ), $view->param( 'c_payment/' . $id, [] ) );
 					}
 					catch( \Aimeos\Controller\Frontend\Basket\Exception $e )
 					{
-						$view->deliveryError = $e->getErrors();
 						// @phpstan-ignore-next-line
 						$view->errors = array_merge( $view->get( 'errors', [] ), $e->getErrors() );
 

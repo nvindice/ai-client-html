@@ -90,6 +90,42 @@ class StandardTest extends \PHPUnit\Framework\TestCase
 	}
 
 
+	public function testInitExceptionMasked()
+	{
+		$mock = $this->getMockBuilder( \Aimeos\Controller\Frontend\Service\Standard::class )
+			->setConstructorArgs( [$this->context] )
+			->onlyMethods( ['updatePush'] )
+			->getMock();
+
+		$mock->expects( $this->once() )->method( 'updatePush' )
+			->will( $this->throwException( new \RuntimeException() ) );
+
+		$logger = $this->getMockBuilder( \Aimeos\Base\Logger\Iface::class )->getMock();
+		$logger->expects( $this->once() )->method( 'error' )->with( $this->callback( function( $msg ) {
+			return !str_contains( $msg, 'secret' ) && str_contains( $msg, '[key] => ***' ) && str_contains( $msg, 'key=%2A%2A%2A&reference=1' );
+		} ) );
+		$this->context->setLogger( $logger );
+
+		$helper = new \Aimeos\Base\View\Helper\Param\Standard( $this->view, ['code' => 'payone', 'key' => 'secret'] );
+		$this->view->addHelper( 'param', $helper );
+
+		$stream = $this->createStub( \Psr\Http\Message\StreamInterface::class );
+		$stream->method( '__toString' )->willReturn( 'key=secret&reference=1' );
+
+		$request = $this->createStub( \Psr\Http\Message\ServerRequestInterface::class );
+		$request->method( 'getHeaderLine' )->willReturn( 'application/x-www-form-urlencoded' );
+		$request->method( 'getBody' )->willReturn( $stream );
+
+		$helper = new \Aimeos\Base\View\Helper\Request\Standard( $this->view, $request, '127.0.0.1', 'test' );
+		$this->view->addHelper( 'request', $helper );
+
+		\Aimeos\Controller\Frontend::inject( \Aimeos\Controller\Frontend\Service\Standard::class, $mock );
+		$this->object->init();
+
+		$this->assertEquals( 500, $this->view->response()->getStatusCode() );
+	}
+
+
 	/**
 	 * @param string $date
 	 */

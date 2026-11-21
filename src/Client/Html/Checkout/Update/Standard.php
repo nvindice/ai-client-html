@@ -76,11 +76,47 @@ class Standard
 			$view->response()->withStatus( 500, 'Error updating order status' );
 			$view->response()->getBody()->write( 'Error updating order status' );
 
-			$body = (string) $view->request()->getBody();
+			$body = $this->mask( (string) $view->request()->getBody(), $view->request()->getHeaderLine( 'Content-Type' ) );
 			$str = "Updating order status failed: %1\$s\n%2\$s\n%3\$s";
-			$msg = sprintf( $str, $e->getMessage(), print_r( $view->param(), true ), $body );
+			$msg = sprintf( $str, $e->getMessage(), print_r( $this->mask( $view->param() ), true ), $body );
 			$context->logger()->error( $msg, 'client/html' );
 		}
+	}
+
+
+	/**
+	 * Masks secret values like hashes or keys which could be used to forge payment notifications
+	 *
+	 * @param mixed $data Request parameters, request body or parameter value
+	 * @param string $type Content type of the request body
+	 * @return mixed Data with masked secret values
+	 */
+	protected function mask( $data, string $type = '' )
+	{
+		if( is_array( $data ) )
+		{
+			foreach( $data as $key => $value ) {
+				$data[$key] = preg_match( '/key|hash|sign|secret|pass|token|alias/i', (string) $key ) ? '***' : $this->mask( $value );
+			}
+
+			return $data;
+		}
+
+		if( !is_string( $data ) ) {
+			return $data;
+		}
+
+		if( is_array( $list = json_decode( $data, true ) ) ) {
+			return (string) json_encode( $this->mask( $list ) );
+		}
+
+		if( str_contains( $type, 'application/x-www-form-urlencoded' ) )
+		{
+			parse_str( $data, $list );
+			return http_build_query( $this->mask( $list ) );
+		}
+
+		return $data;
 	}
 
 

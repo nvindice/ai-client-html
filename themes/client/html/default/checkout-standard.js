@@ -10,7 +10,7 @@ AimeosCheckoutStandard = {
 
 		document.querySelectorAll(".checkout-standard-address .item-address").forEach(el => {
 			el.addEventListener("show.bs.collapse", ev => {
-				$(".form-item.mandatory input, .form-item.mandatory select, .form-item.optional input, .form-item.optional select", ev.currentTarget).prop("disabled", false);
+				$(".form-item.mandatory input, .form-item.mandatory select, .form-item.optional input, .form-item.optional select, .form-item.hidden input, .form-item.hidden select", ev.currentTarget).prop("disabled", false);
 			});
 		});
 

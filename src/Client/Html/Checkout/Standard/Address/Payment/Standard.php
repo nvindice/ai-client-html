@@ -461,6 +461,11 @@ class Standard
 			$params = $cntl->add( $params )->store()->get()->getPaymentAddress()->toArray();
 		}
 
+		// hidden fields aren't sent by the browser if they are disabled
+		if( empty( $params['order.address.languageid'] ) ) {
+			$params['order.address.languageid'] = $context->locale()->getLanguageId();
+		}
+
 		$basketCtrl->addAddress( $type, $params, 0 );
 	}
 

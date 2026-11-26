@@ -333,6 +333,11 @@ class Standard
 				throw new \Aimeos\Client\Html\Exception( sprintf( 'At least one delivery address part is missing or invalid' ) );
 			}
 
+			// hidden fields aren't sent by the browser if they are disabled
+			if( empty( $params['order.address.languageid'] ) ) {
+				$params['order.address.languageid'] = $context->locale()->getLanguageId();
+			}
+
 			$ctrl->addAddress( $type, $params, 0 );
 		}
 		else if( ( $option = $view->param( 'ca_deliveryoption' ) ) !== 'like' ) // existing address

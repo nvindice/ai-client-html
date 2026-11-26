@@ -88,6 +88,38 @@ class StandardTest extends \PHPUnit\Framework\TestCase
 	}
 
 
+	public function testInitNewAddressNoLanguage()
+	{
+		$config = $this->context->config();
+		$config->set( 'client/html/common/address/delivery/mandatory', ['firstname', 'lastname', 'address1', 'postal', 'city'] );
+		$config->set( 'client/html/common/address/delivery/hidden', ['languageid'] );
+
+		$this->view = \TestHelper::view( 'unittest', $config );
+
+		$param = array(
+			'ca_deliveryoption' => 'null',
+			'ca_delivery' => array(
+				'order.address.salutation' => 'mr',
+				'order.address.firstname' => 'test',
+				'order.address.lastname' => 'user',
+				'order.address.address1' => 'mystreet 1',
+				'order.address.postal' => '20000',
+				'order.address.city' => 'hamburg',
+			),
+		);
+		$helper = new \Aimeos\Base\View\Helper\Param\Standard( $this->view, $param );
+		$this->view->addHelper( 'param', $helper );
+
+		$this->object->setView( $this->view );
+
+		$this->object->init();
+
+		$basket = \Aimeos\Controller\Frontend::create( $this->context, 'basket' )->get();
+		$langId = $this->context->locale()->getLanguageId();
+		$this->assertEquals( $langId, $basket->getAddress( 'delivery', 0 )->getLanguageId() );
+	}
+
+
 	public function testInitGet()
 	{
 		$this->view = \TestHelper::view();
